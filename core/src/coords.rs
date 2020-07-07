@@ -1,5 +1,5 @@
 use num_traits::{Num, One, Zero};
-use std::ops::{Mul, Add, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign, Neg};
 
 #[derive(Debug, Clone)]
 pub struct Vec4<T: Num + Default + PartialEq> {
@@ -73,8 +73,8 @@ where
 }
 
 impl<T> Mul for Vec4<T>
-    where
-        T: Num + Default + PartialEq,
+where
+    T: Num + Default + PartialEq,
 {
     type Output = Self;
 
@@ -88,9 +88,49 @@ impl<T> Mul for Vec4<T>
     }
 }
 
+impl<T> MulAssign for Vec4<T>
+where
+    T: Num + Default + PartialEq + MulAssign,
+{
+    fn mul_assign(&mut self, rhs: Self) {
+        self.x *= rhs.x;
+        self.y *= rhs.y;
+        self.z *= rhs.z;
+        self.w *= rhs.w;
+    }
+}
+
+impl<T> Div for Vec4<T>
+where
+    T: Num + Default + PartialEq,
+{
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x / rhs.x,
+            y: self.y / rhs.y,
+            z: self.z / rhs.z,
+            w: self.w / rhs.w,
+        }
+    }
+}
+
+impl<T> DivAssign for Vec4<T>
+where
+    T: Num + Default + PartialEq + DivAssign,
+{
+    fn div_assign(&mut self, rhs: Self) {
+        self.x /= rhs.x;
+        self.y /= rhs.y;
+        self.z /= rhs.z;
+        self.w /= rhs.w;
+    }
+}
+
 impl<T> Add for Vec4<T>
-    where
-        T: Num + Default + PartialEq,
+where
+    T: Num + Default + PartialEq,
 {
     type Output = Self;
 
@@ -101,6 +141,18 @@ impl<T> Add for Vec4<T>
             z: self.z + rhs.z,
             w: self.w + rhs.w,
         }
+    }
+}
+
+impl<T> AddAssign for Vec4<T>
+where
+    T: Num + Default + PartialEq + AddAssign,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+        self.z += rhs.z;
+        self.w += rhs.w;
     }
 }
 
@@ -120,12 +172,40 @@ where
     }
 }
 
-impl <T> PartialEq for Vec4<T> where T: Num + Default + PartialEq {
+impl<T> SubAssign for Vec4<T>
+where
+    T: Num + Default + PartialEq + SubAssign,
+{
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+        self.z -= rhs.z;
+        self.w -= rhs.w;
+    }
+}
+
+impl<T> Neg for Vec4<T> where T: Num + Default + PartialEq + Neg {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self::Output {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: -self.w
+        }
+    }
+}
+
+impl<T> PartialEq for Vec4<T>
+where
+    T: Num + Default + PartialEq,
+{
     fn eq(&self, other: &Self) -> bool {
-        PartialEq::eq(&self.x, &other.x) &&
-        PartialEq::eq(&self.y, &other.y) &&
-        PartialEq::eq(&self.z, &other.z) &&
-        PartialEq::eq(&self.w, &other.w)
+        PartialEq::eq(&self.x, &other.x)
+            && PartialEq::eq(&self.y, &other.y)
+            && PartialEq::eq(&self.z, &other.z)
+            && PartialEq::eq(&self.w, &other.w)
     }
 }
 
@@ -165,5 +245,65 @@ mod tests {
         let v: Vec4<f64> = Vec4::one();
         assert_eq!(v.is_zero(), false);
         assert_eq!(v.is_one(), true);
+    }
+
+    #[test]
+    fn vec4_add() {
+        let v: Vec4<f64> = Vec4::from(1.0, 2.0, 3.0, 4.0);
+        let check = v.clone() + v.clone();
+        assert_eq!(check.x, 2.0);
+        assert_eq!(check.y, 4.0);
+        assert_eq!(check.z, 6.0);
+        assert_eq!(check.w, 8.0);
+    }
+
+    #[test]
+    fn vec4_add_assign() {
+        let mut v: Vec4<f64> = Vec4::from(1.0, 2.0, 3.0, 4.0);
+        v += v.clone();
+        assert_eq!(v.x, 2.0);
+        assert_eq!(v.y, 4.0);
+        assert_eq!(v.z, 6.0);
+        assert_eq!(v.w, 8.0);
+    }
+
+    #[test]
+    fn vec4_sub() {
+        let v: Vec4<f64> = Vec4::from(1.0, 2.0, 3.0, 4.0);
+        let check = v.clone() - v.clone();
+        assert_eq!(check.x, 0.0);
+        assert_eq!(check.y, 0.0);
+        assert_eq!(check.z, 0.0);
+        assert_eq!(check.w, 0.0);
+    }
+
+    #[test]
+    fn vec4_sub_assign() {
+        let mut v: Vec4<f64> = Vec4::from(1.0, 2.0, 3.0, 4.0);
+        v -= v.clone();
+        assert_eq!(v.x, 0.0);
+        assert_eq!(v.y, 0.0);
+        assert_eq!(v.z, 0.0);
+        assert_eq!(v.w, 0.0);
+    }
+
+    #[test]
+    fn vec4_mul() {
+        let v: Vec4<f64> = Vec4::from(1.50, 2.0, 3.0, 4.0);
+        let check = v.clone() * v.clone();
+        assert_eq!(check.x, 2.25);
+        assert_eq!(check.y, 4.0);
+        assert_eq!(check.z, 9.0);
+        assert_eq!(check.w, 16.0);
+    }
+
+    #[test]
+    fn vec4_mul_assign() {
+        let mut v: Vec4<f64> = Vec4::from(1.50, 2.0, 3.0, 4.0);
+        v *= v.clone();
+        assert_eq!(v.x, 2.25);
+        assert_eq!(v.y, 4.0);
+        assert_eq!(v.z, 9.0);
+        assert_eq!(v.w, 16.0);
     }
 }
